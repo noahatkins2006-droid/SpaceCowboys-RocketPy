@@ -1,0 +1,5 @@
+﻿__pycache__/
+*.grib2
+*.grib2.*
+*.idx
+_gui_run.py
