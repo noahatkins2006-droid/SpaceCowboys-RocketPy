@@ -35,16 +35,20 @@ from conversions import Conversion
 # Configuration
 # ==============================================================================
 
-# Launch site coordinates
+# Launch site coordinates (elevation in meters)
 LAUNCH_SITES = {
     "TL1": {"lat": 33.50, "lon": -101.85, "elevation": 1005},       # Texas (TL1)
     "midland": {"lat": 31.04, "lon": -102.20, "elevation": 875},    # Midland TX
     "south_farm": {"lat": 33.40, "lon": -88.80, "elevation": 116},  # South Farm MS
-    "spaceport": {"lat": 32.99, "lon": -106.98, "elevation": 1401}, # Spaceport America
+    "spaceport": {"lat": 32.99, "lon": -106.98, "elevation": 1401}, # Spaceport America NM
+    "IREC": {"lat": 31.0498, "lon": -103.5473, "elevation": 894},   # IREC 2026 - Midland Spaceport Launch Area, Saragosa TX (2933 ft)
 }
 
 # Select launch site
 SITE = "midland"
+
+# Override elevation here if needed (meters), or set to None to use default
+ELEVATION_OVERRIDE = None  # e.g. 900 to override
 
 # Target simulation date and time (local Central time) only up to 18 hrs ahead
 TARGET_DATE = "2026-08-26"
@@ -79,15 +83,16 @@ def setup_environment(site: dict, sim_datetime: datetime) -> Environment:
     RocketPy 1.13.0 natively supports HRRR via THREDDS - no external 
     weather libraries needed.
     """
+    elevation = ELEVATION_OVERRIDE if ELEVATION_OVERRIDE is not None else site["elevation"]
+
     env = Environment(
         latitude=site["lat"],
         longitude=site["lon"],
-        elevation=site["elevation"],
+        elevation=elevation,
         date=sim_datetime,
     )
 
     # Use RocketPy's built-in HRRR forecast via THREDDS
-    # This replaces the old custom SpaceWeather class that used Herbie
     try:
         env.set_atmospheric_model(type="forecast", file="HRRR")
         print("✓ HRRR weather data loaded successfully via THREDDS")
@@ -100,6 +105,16 @@ def setup_environment(site: dict, sim_datetime: datetime) -> Environment:
             print(f"⚠ GFS also unavailable ({e2}), using standard atmosphere")
             env.set_atmospheric_model(type="standard_atmosphere")
             print("✓ Standard atmosphere loaded (no live weather)")
+
+    # Print weather debug info
+    print(f"\n--- Weather Debug ---")
+    print(f"  Elevation:      {elevation:.0f} m ({elevation * 3.28084:.0f} ft)")
+    print(f"  Temperature:    {env.temperature(elevation):.1f} K ({(env.temperature(elevation) - 273.15) * 9/5 + 32:.1f} °F)")
+    print(f"  Pressure:       {env.pressure(elevation):.0f} Pa ({env.pressure(elevation) / 6894.76:.2f} psi)")
+    print(f"  Air Density:    {env.density(elevation):.4f} kg/m³")
+    print(f"  Speed of Sound: {env.speed_of_sound(elevation):.1f} m/s ({env.speed_of_sound(elevation) * 3.28084:.0f} ft/s)")
+    print(f"  Wind (surface): {env.wind_speed(elevation):.1f} m/s ({env.wind_speed(elevation) * 2.237:.1f} mph) @ {env.wind_direction(elevation):.0f}°")
+    print(f"---------------------\n")
 
     return env
 
