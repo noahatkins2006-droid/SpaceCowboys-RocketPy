@@ -65,7 +65,7 @@ The simulation automatically falls back to GFS → standard atmosphere if HRRR i
 
 ## Dependencies
 
-Only **6 packages** required (down from 200+ in the previous version):
+Only **6 packages** required:
 
 - `rocketpy` - Core 6-DOF simulation with built-in weather & export
 - `numpy` - Numerical computing
