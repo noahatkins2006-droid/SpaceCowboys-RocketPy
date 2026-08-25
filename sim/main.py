@@ -41,7 +41,6 @@ LAUNCH_SITES = {
     "midland": {"lat": 31.04, "lon": -102.20, "elevation": 875},    # Midland TX
     "south_farm": {"lat": 33.40, "lon": -88.80, "elevation": 116},  # South Farm MS
     "spaceport": {"lat": 32.99, "lon": -106.98, "elevation": 1401}, # Spaceport America NM
-    "IREC": {"lat": 31.0498, "lon": -103.5473, "elevation": 894},   # IREC 2026 - Midland Spaceport Launch Area, Saragosa TX (2933 ft)
 }
 
 # Select launch site
