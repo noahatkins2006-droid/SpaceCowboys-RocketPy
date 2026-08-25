@@ -6,7 +6,7 @@ Uses RocketPy 1.13.0+ built-in HRRR weather via THREDDS and
 FlightDataExporter for KML/CSV output.
 """
 
-from rocketpy import Environment, Rocket, Flight
+from rocketpy import Environment, Rocket, Flight, Function
 from rocketpy.simulation import FlightDataExporter
 import numpy as np
 import pandas as pd
@@ -44,11 +44,11 @@ LAUNCH_SITES = {
 }
 
 # Select launch site
-SITE = "TL1"
+SITE = "midland"
 
-# Target simulation date and time (local Central time)
-TARGET_DATE = "2026-05-05"
-TARGET_HOUR = "12:00:00"  # Local time (Central)
+# Target simulation date and time (local Central time) only up to 18 hrs ahead
+TARGET_DATE = "2026-08-26"
+TARGET_HOUR = "06:00:00"  # Local time (Central) — 11:00 UTC
 
 # Timezone setup
 LOCAL_TZ = zoneinfo.ZoneInfo("America/Chicago")
@@ -115,9 +115,20 @@ def setup_rocket(engine) -> Rocket:
     """
     Set up the Bandit rocket with all aerodynamic surfaces and parachutes.
     """
-    # Load drag curves
-    on_drag = pd.read_csv(DRAG_FILE, usecols=["Mach", "CD Power-On"]).to_numpy()
-    off_drag = pd.read_csv(DRAG_FILE, usecols=["Mach", "CD Power-Off"]).to_numpy()
+    # Load drag curves as RocketPy Function objects (Mach vs CD)
+    drag_df = pd.read_csv(DRAG_FILE)
+    on_drag = Function(
+        drag_df[["Mach", "CD Power-On"]].to_numpy(),
+        inputs="Mach",
+        outputs="CD",
+        interpolation="linear",
+    )
+    off_drag = Function(
+        drag_df[["Mach", "CD Power-Off"]].to_numpy(),
+        inputs="Mach",
+        outputs="CD",
+        interpolation="linear",
+    )
 
     # Build rocket
     bandit = Rocket(
@@ -192,23 +203,31 @@ def run_simulation(rocket: Rocket, env: Environment) -> Flight:
         heading=0,
     )
 
-    flight.post_process()
     return flight
 
 
 def print_results(flight: Flight):
-    """Print key flight results."""
+    """Print key flight results in imperial units."""
+    M_TO_FT = 3.28084
+    MPS_TO_FPS = 3.28084
+
+    apogee_ft = (flight.apogee - flight.env.elevation) * M_TO_FT
+    max_vel_fps = flight.max_speed * MPS_TO_FPS
+    max_accel_g = flight.max_acceleration / 9.81
+    burnout_alt_ft = (flight.out_of_rail_state[2] if hasattr(flight, 'out_of_rail_state') else 0)
+
     print("\n" + "=" * 60)
-    print("FLIGHT RESULTS")
+    print("FLIGHT RESULTS (Imperial)")
     print("=" * 60)
-    flight.prints.surface_wind_conditions()
-    flight.prints.launch_rail_conditions()
-    flight.prints.out_of_rail_conditions()
-    flight.prints.burn_out_conditions()
+    print(f"\n  Apogee:            {apogee_ft:.0f} ft AGL")
+    print(f"  Max Speed:         {max_vel_fps:.0f} ft/s ({flight.max_speed:.1f} m/s | Mach {flight.max_mach_number:.2f})")
+    print(f"  Max Acceleration:  {max_accel_g:.1f} G")
+    print(f"  Apogee Time:       {flight.apogee_time:.2f} s")
+    print(f"  Rail Departure V:  {flight.out_of_rail_velocity * MPS_TO_FPS:.1f} ft/s ({flight.out_of_rail_velocity:.1f} m/s)")
+    print()
     flight.prints.apogee_conditions()
     flight.prints.events_registered()
     flight.prints.impact_conditions()
-    flight.prints.maximum_values()
 
 
 def export_results(flight: Flight, sim_datetime: datetime):
