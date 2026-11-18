@@ -1,16 +1,28 @@
-# Space Cowboys RocketPy Simulation
-# Minimal dependencies - only what's needed to run simulations
+# Space Cowboys RocketPy Simulation - Bandit flight reconstruction
+# Python 3.10 or newer is required (the OpenRocket parser uses `match` statements).
+#
+# Only packages the project actually needs are listed.
 
-# Core simulation engine (includes built-in HRRR, KML export, FlightDataExporter)
+# --- Simulation engine ------------------------------------------------------
+# 6-DOF flight simulation, motor/rocket models and KML/CSV export.
 rocketpy==1.13.0
 
-# Data handling
+# --- Data handling ----------------------------------------------------------
 numpy>=2.0.0
-pandas>=2.0.0
+pandas>=2.0.0            # reads the OpenRocket drag table (main.py)
 
-# XML parsing for OpenRocket .ork files
-beautifulsoup4>=4.12.0
-lxml>=5.0.0
+# --- Weather data (historical_weather.py) -----------------------------------
+xarray>=2024.1.0         # gridded weather arrays
+herbie-data>=2024.8.0    # downloads HRRR GRIB2 files (imported as `herbie`)
+cfgrib>=0.9.14           # reads GRIB2 files into xarray
+eccodes>=2.36.0          # GRIB decoding library used by cfgrib
+cdsapi>=0.7.0            # ERA5 fallback (needs a free Copernicus CDS account)
+netCDF4>=1.6.0           # reads the ERA5 NetCDF files
 
-# Plotting (optional, for visualization)
-matplotlib>=3.8.0
+# --- OpenRocket .ork parsing (openrocket_parser.py) -------------------------
+beautifulsoup4>=4.12.0   # imported as `bs4`
+lxml>=5.0.0              # XML backend for BeautifulSoup
+
+# --- Windows only -----------------------------------------------------------
+# Python's built-in zoneinfo needs this time zone database on Windows.
+tzdata; sys_platform == "win32"

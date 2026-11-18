@@ -5,14 +5,39 @@ Pre-configured SolidMotor definitions for the team's rocket fleet.
 Motor parameters sourced from manufacturer data and real-world experimentation.
 """
 
+# SolidMotor is RocketPy's solid-propellant motor model. It combines a thrust
+# curve (from a .eng file) with grain geometry so RocketPy can track how the
+# motor's mass, center of mass and inertia change as propellant burns.
 from rocketpy import SolidMotor
 from conversions import Conversion
 
+# One shared converter instance used by the motors that are specified in
+# imperial units (M1340W, H195NT, J450DM, J800T).
 C = Conversion()
 
 
 class MotorLibrary:
     """Collection of pre-configured rocket motors."""
+
+    # Each method returns a ready-to-use SolidMotor. `motor_file` is the path to
+    # the thrust curve (.eng) file. Common parameters used below:
+    #   thrust_source ........ thrust-vs-time curve file
+    #   dry_mass ............. motor hardware mass with NO propellant (kg)
+    #   dry_inertia .......... (I11, I22, I33) of the dry hardware (kg*m^2),
+    #                          where I33 is about the long (roll) axis
+    #   nozzle_radius ........ exit radius of the nozzle (m)
+    #   throat_radius ........ radius of the nozzle throat (m)
+    #   grain_number ......... how many propellant grains are stacked
+    #   grain_density ........ propellant density (kg/m^3)
+    #   grain_outer_radius ... outer radius of each grain (m)
+    #   grain_initial_inner_radius .. radius of the core hole before burning (m)
+    #   grain_initial_height . length of one grain (m)
+    #   grain_separation ..... gap between neighboring grains (m)
+    #   *_position ........... measured along the motor axis from the nozzle,
+    #                          because the coordinate system below is
+    #                          "nozzle_to_combustion_chamber"
+    #   burn_time ............ optional; when omitted, RocketPy reads the burn
+    #                          time from the thrust curve
 
     def O5500X(self, motor_file: str = "") -> SolidMotor:
         """
