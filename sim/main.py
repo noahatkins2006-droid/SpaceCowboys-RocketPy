@@ -57,7 +57,7 @@ SITE = {
 LOCAL_TZ = zoneinfo.ZoneInfo("America/Chicago")
 UTC_TZ = zoneinfo.ZoneInfo("UTC")
 
-# Exact liftoff time from the flight-computer summary.
+# Exact liftoff time from the flight-computer summary. Can only see 18hrs in the future.
 # datetime(year, month, day[, hour[, minute[, second[, microsecond[,tzinfo]]]]])
 LAUNCH_LOCAL = datetime(2026, 6, 17, 13, 55, 53, 485000, tzinfo=LOCAL_TZ)
 LAUNCH_UTC = LAUNCH_LOCAL.astimezone(UTC_TZ)
